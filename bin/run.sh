@@ -27,7 +27,24 @@ OUTPUT_DIR="${3%/}"
 
 if [[ "${RUN_IN_DOCKER}" == "TRUE" ]]; then  
     WORKING_DIR="${PWD}"
-    cp -r "${INPUT_DIR}/." "${WORKING_DIR}"
+
+    # 1. Modify Package.swift to add new dependencies
+    # 2. Copy source and destination files
+    cp -r "${INPUT_DIR}/.meta" "${WORKING_DIR}"
+
+    find "${WORKING_DIR}/Sources/WarmUp" -type f -delete
+    find "${WORKING_DIR}/Tests/WarmUpTests" -type f -delete
+
+    find "${INPUT_DIR}/Sources" -name '*.swift' -exec cp {} "${WORKING_DIR}/Sources/WarmUp/" \;
+    find "${INPUT_DIR}/Tests" -name '*.swift' -exec cp {} "${WORKING_DIR}/Tests/WarmUpTests/" \;
+
+    ls -al "${WORKING_DIR}/Tests/WarmUpTests/"
+
+    filename=$(jq -r '.files.test[0] | split("/") | last' ${INPUT_DIR}/.meta/config.json)
+    destination_path="/Tests/WarmUpTests/${filename}"
+    jq --arg fname "$destination_path" '.files.test[0] = $fname' ${INPUT_DIR}/.meta/config.json > tmp.json && mv tmp.json ${WORKING_DIR}/.meta/config.json
+
+    sed -i 's/@testable import [^ ]\+/@testable import WarmUp/g' "${WORKING_DIR}/Tests/WarmUpTests"/*.swift
 else
     WORKING_DIR=${INPUT_DIR}
 fi
