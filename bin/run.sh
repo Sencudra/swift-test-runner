@@ -26,31 +26,36 @@ INPUT_DIR="${2%/}"
 OUTPUT_DIR="${3%/}"
 
 if [[ "${RUN_IN_DOCKER}" == "TRUE" ]]; then  
+    # Docker image contains a prebuilt package called WarmUp with a ready .build directory.
+    # To minimize changes in the build graph, exercise resources are copied inside the WarmUp package
+    # as if they had always been there.
+
     WORKING_DIR="${PWD}"
+    desc_file="${WORKING_DIR}/package_desc.json"
+    swift package dump-package --package-path ${INPUT_DIR} > "$desc_file"
 
-    # 1. Modify Package.swift to add new dependencies
-    # 2. Copy source and destination files
-    cp -r "${INPUT_DIR}/.meta" "${WORKING_DIR}"
-
+    # 1. Replace source files with those of an exercise
     find "${WORKING_DIR}/Sources/WarmUp" -type f -delete
     find "${WORKING_DIR}/Tests/WarmUpTests" -type f -delete
+    target_name=$(jq -r '.targets[] | select(.type=="regular") | .name' "$desc_file" | head -1)
+    test_target_name=$(jq -r '.targets[] | select(.type=="test") | .name' "$desc_file" | head -1)
 
-    find "${INPUT_DIR}/Sources" -name '*.swift' -exec cp {} "${WORKING_DIR}/Sources/WarmUp/" \;
-    find "${INPUT_DIR}/Tests" -name '*.swift' -exec cp {} "${WORKING_DIR}/Tests/WarmUpTests/" \;
+    cp -rf "${INPUT_DIR}/Sources/${target_name}/." "${WORKING_DIR}/Sources/WarmUp/"
+    cp -rf "${INPUT_DIR}/Tests/${test_target_name}/." "${WORKING_DIR}/Tests/WarmUpTests/"
 
-    ls -al "${WORKING_DIR}/Tests/WarmUpTests/"
-
-    filename=$(jq -r '.files.test[0] | split("/") | last' ${INPUT_DIR}/.meta/config.json)
-    destination_path="/Tests/WarmUpTests/${filename}"
-    jq --arg fname "$destination_path" '.files.test[0] = $fname' ${INPUT_DIR}/.meta/config.json > tmp.json && mv tmp.json ${WORKING_DIR}/.meta/config.json
-
+    # 2. Replace @testable import SomeModule with @testable import WarmUp
     sed -i 's/@testable import [^ ]\+/@testable import WarmUp/g' "${WORKING_DIR}/Tests/WarmUpTests"/*.swift
+
+    # 3. Copy and modify Package.swift
+    cp "${INPUT_DIR}/Package.swift" "${WORKING_DIR}"
+    sed -i "s/${target_name}/WarmUp/g" "${WORKING_DIR}/Package.swift"
+
 else
     WORKING_DIR=${INPUT_DIR}
 fi
 
 junit_file="${WORKING_DIR}/results-swift-testing.xml"
-spec_file="${WORKING_DIR}/$(jq -r '.files.test[0]' ${WORKING_DIR}/.meta/config.json)"
+spec_file="${INPUT_DIR}/$(jq -r '.files.test[0]' ${INPUT_DIR}/.meta/config.json)"
 capture_file="${OUTPUT_DIR}/capture"
 results_file="${OUTPUT_DIR}/results.json"
 
