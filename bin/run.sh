@@ -53,7 +53,8 @@ if [[ "${RUN_IN_DOCKER}" == "TRUE" ]]; then
 
     # 3. Copy Package.swift and rename main & test targets.
     cp "${INPUT_DIR}/Package.swift" "${WORKING_DIR}"
-    sed -i "s/${target_name}/TestEnvironment/g" "${WORKING_DIR}/Package.swift"
+    sed -i "s/\"${target_name}\"/\"TestEnvironment\"/g" "${WORKING_DIR}/Package.swift"
+    sed -i "s/\"${test_target_name}\"/\"TestEnvironmentTests\"/g" "${WORKING_DIR}/Package.swift"
 
 else
     WORKING_DIR=${INPUT_DIR}
