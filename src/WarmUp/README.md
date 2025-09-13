@@ -1,7 +1,7 @@
 # Swift build cache warm-up for faster builds inside docker
 ## Overview
 
-Cold swift builds are slow. We need fast feedback — to respond quickly when someone runs an exercise and not hit Docker timeouts. This package is used to build warm-up: it prebuilds the .build folder during docker image creation and is used as an environment for building exercises.
+Cold swift builds are slow. We need fast feedback — to respond quickly when someone runs an exercise and not hit Docker timeouts. This package is used to build warm-up: it prebuilds the .build folder during docker image creation and is used as an environment for building and testing exercises.
 
 ## Why cold builds are slow?
 
