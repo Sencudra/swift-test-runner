@@ -1,3 +1,8 @@
+# 2.0.4
+
+- The WarmUp package has been renamed to TestEnvironment and is now used directly to build exercise solutions.
+- A more aggressive caching strategy is applied when source files are copied into the package.
+
 # 2.0.3
 
 - Add WarmUp package to improve exercise build time.
