@@ -31,22 +31,27 @@ if [[ "${RUN_IN_DOCKER}" == "TRUE" ]]; then
     # exercise resources are copied inside the TestEnvironment package as if they had always been there.
 
     WORKING_DIR="${PWD}"
-    desc_file="${WORKING_DIR}/package_desc.json"
-    swift package dump-package --package-path ${INPUT_DIR} > "$desc_file"
+    CONFIG_FILE="${INPUT_DIR}/.meta/config.json"
+    SOURCE_TARGET_PATH="${WORKING_DIR}/Sources/TestEnvironment"
+    TEST_TARGET_PATH="${WORKING_DIR}/Tests/TestEnvironmentTests"
 
-    # 1. Replace source files with those of an exercise
-    find "${WORKING_DIR}/Sources/TestEnvironment" -type f -delete
-    target_name=$(jq -r '.targets[] | select(.type=="regular") | .name' "$desc_file" | head -1)
-    cp -rf "${INPUT_DIR}/Sources/${target_name}/." "${WORKING_DIR}/Sources/TestEnvironment/"
+    # 1. Replace source files with those of an exercise, saving TestEnvironement paths
+    rm -Rf $SOURCE_TARGET_PATH $TEST_TARGET_PATH
 
-    find "${WORKING_DIR}/Tests/TestEnvironmentTests" -type f -delete
-    test_target_name=$(jq -r '.targets[] | select(.type=="test") | .name' "$desc_file" | head -1)
-    cp -rf "${INPUT_DIR}/Tests/${test_target_name}/." "${WORKING_DIR}/Tests/TestEnvironmentTests/"
+    target_name=$(jq -r '.files.solution[0]' $CONFIG_FILE | xargs dirname | xargs basename)
+    test_target_name=$(jq -r '.files.test[0]' $CONFIG_FILE | xargs dirname | xargs basename)
+
+    # Copying everything from package in case of other targets.
+    cp -rf "${INPUT_DIR}/Sources/." "${WORKING_DIR}/Sources"
+    cp -rf "${INPUT_DIR}/Tests/." "${WORKING_DIR}/Tests"
+
+    mv "${WORKING_DIR}/Sources/${target_name}" $SOURCE_TARGET_PATH
+    mv "${WORKING_DIR}/Tests/${test_target_name}" $TEST_TARGET_PATH
 
     # 2. Replace @testable import SomeModule with @testable import TestEnvironment
     sed -i 's/@testable import [^ ]\+/@testable import TestEnvironment/g' "${WORKING_DIR}/Tests/TestEnvironmentTests"/*.swift
 
-    # 3. Copy and modify Package.swift
+    # 3. Copy Package.swift and rename main & test targets.
     cp "${INPUT_DIR}/Package.swift" "${WORKING_DIR}"
     sed -i "s/${target_name}/TestEnvironment/g" "${WORKING_DIR}/Package.swift"
 
