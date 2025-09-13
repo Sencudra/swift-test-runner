@@ -5,7 +5,7 @@ RUN swift --version
 # Build TestRunner executable
 WORKDIR /TestRunner
 COPY src/TestRunner .
-RUN swift build --configuration debug
+RUN swift build --configuration release --enable-experimental-prebuilts
 
 # Stage 2: Prepare docker container image
 FROM swift:6.1.2
@@ -19,7 +19,7 @@ COPY src/WarmUp .
 RUN swift build --build-tests
 
 COPY bin/run.sh bin/run-test.sh bin/
-COPY --from=builder /TestRunner/.build/debug/TestRunner bin/
+COPY --from=builder /TestRunner/.build/release/TestRunner bin/
 
 ENV RUN_IN_DOCKER=TRUE
 
