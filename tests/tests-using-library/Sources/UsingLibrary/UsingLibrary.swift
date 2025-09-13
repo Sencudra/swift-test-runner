@@ -1,3 +1,6 @@
+import Foundation
+import Numerics
+
 enum TestError: Error {
   case testError(String)
 }
