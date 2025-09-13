@@ -13,9 +13,9 @@ RUN apt-get update && apt-get install -y jq
 
 WORKDIR /opt/test-runner
 
-# Build WarmUp package
+# Build TestEnvironment package
 # Build directory and final working paths should be equal for reuse of ModuleCache.
-COPY src/WarmUp .
+COPY src/TestEnvironment .
 RUN swift build --build-tests
 
 COPY bin/run.sh bin/run-test.sh bin/

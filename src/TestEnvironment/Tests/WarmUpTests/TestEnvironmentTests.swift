@@ -2,7 +2,7 @@ import Foundation
 import Numerics
 import Testing
 
-@testable import WarmUp
+@testable import TestEnvironment
 
 let RUNALL = Bool(ProcessInfo.processInfo.environment["RUNALL", default: "false"]) ?? false
 

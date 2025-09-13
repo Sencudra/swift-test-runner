@@ -3,11 +3,11 @@
 import PackageDescription
 
 let package = Package(
-    name: "WarmUp",
+    name: "TestEnvironment",
     products: [
         .library(
-            name: "WarmUp",
-            targets: ["WarmUp"]
+            name: "TestEnvironment",
+            targets: ["TestEnvironment"]
         ),
     ],
     dependencies: [
@@ -15,15 +15,15 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "WarmUp",
+            name: "TestEnvironment",
             dependencies: [
                 .product(name: "Numerics", package: "swift-numerics")
             ]
         ),
         .testTarget(
-            name: "WarmUpTests",
+            name: "TestEnvironmentTests",
             dependencies: [
-                "WarmUp",
+                "TestEnvironment",
                 .product(name: "Numerics", package: "swift-numerics")
             ]
         )

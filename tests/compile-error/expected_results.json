@@ -1,5 +1,5 @@
 {
-  "message" : "/opt/test-runner/Sources/WarmUp/CompileError.swift:2:12: error: unexpected non-void return value in void function1 | func sum(_ x: Int, _ y: Int) {2 |   return x + y  |            |- error: unexpected non-void return value in void function  |            `- note: did you mean to add a return type?3 | }4 | error: fatalError",
+  "message" : "/opt/test-runner/Sources/TestEnvironment/CompileError.swift:2:12: error: unexpected non-void return value in void function1 | func sum(_ x: Int, _ y: Int) {2 |   return x + y  |            |- error: unexpected non-void return value in void function  |            `- note: did you mean to add a return type?3 | }4 | error: fatalError",
   "status" : "error",
   "tests" : [
 

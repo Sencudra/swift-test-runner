@@ -25,30 +25,30 @@ SLUG="$1"
 INPUT_DIR="${2%/}"
 OUTPUT_DIR="${3%/}"
 
-if [[ "${RUN_IN_DOCKER}" == "TRUE" ]]; then  
-    # Docker image contains a prebuilt package called WarmUp with a ready .build directory.
-    # To minimize changes in the build graph, exercise resources are copied inside the WarmUp package
-    # as if they had always been there.
+if [[ "${RUN_IN_DOCKER}" == "TRUE" ]]; then
+    # Docker image contains a prebuilt package called TestEnvironment with a ready .build directory 
+    # to build solutions as fast as it possible. To minimize changes in the build graph,
+    # exercise resources are copied inside the TestEnvironment package as if they had always been there.
 
     WORKING_DIR="${PWD}"
     desc_file="${WORKING_DIR}/package_desc.json"
     swift package dump-package --package-path ${INPUT_DIR} > "$desc_file"
 
     # 1. Replace source files with those of an exercise
-    find "${WORKING_DIR}/Sources/WarmUp" -type f -delete
-    find "${WORKING_DIR}/Tests/WarmUpTests" -type f -delete
+    find "${WORKING_DIR}/Sources/TestEnvironment" -type f -delete
     target_name=$(jq -r '.targets[] | select(.type=="regular") | .name' "$desc_file" | head -1)
+    cp -rf "${INPUT_DIR}/Sources/${target_name}/." "${WORKING_DIR}/Sources/TestEnvironment/"
+
+    find "${WORKING_DIR}/Tests/TestEnvironmentTests" -type f -delete
     test_target_name=$(jq -r '.targets[] | select(.type=="test") | .name' "$desc_file" | head -1)
+    cp -rf "${INPUT_DIR}/Tests/${test_target_name}/." "${WORKING_DIR}/Tests/TestEnvironmentTests/"
 
-    cp -rf "${INPUT_DIR}/Sources/${target_name}/." "${WORKING_DIR}/Sources/WarmUp/"
-    cp -rf "${INPUT_DIR}/Tests/${test_target_name}/." "${WORKING_DIR}/Tests/WarmUpTests/"
-
-    # 2. Replace @testable import SomeModule with @testable import WarmUp
-    sed -i 's/@testable import [^ ]\+/@testable import WarmUp/g' "${WORKING_DIR}/Tests/WarmUpTests"/*.swift
+    # 2. Replace @testable import SomeModule with @testable import TestEnvironment
+    sed -i 's/@testable import [^ ]\+/@testable import TestEnvironment/g' "${WORKING_DIR}/Tests/TestEnvironmentTests"/*.swift
 
     # 3. Copy and modify Package.swift
     cp "${INPUT_DIR}/Package.swift" "${WORKING_DIR}"
-    sed -i "s/${target_name}/WarmUp/g" "${WORKING_DIR}/Package.swift"
+    sed -i "s/${target_name}/TestEnvironment/g" "${WORKING_DIR}/Package.swift"
 
 else
     WORKING_DIR=${INPUT_DIR}
