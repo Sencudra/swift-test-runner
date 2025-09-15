@@ -15,6 +15,8 @@
 # Example:
 # ./bin/run.sh two-fer /absolute/path/to/two-fer/solution/folder/ /absolute/path/to/output/directory/
 
+set -euo pipefail
+
 # If any required arguments is missing, print the usage and exit
 if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
     echo "usage: ./bin/run.sh exercise-slug /absolute/path/to/two-fer/solution/folder/ /absolute/path/to/output/directory/"
@@ -33,7 +35,7 @@ if [[ "${RUN_IN_DOCKER}" == "TRUE" ]]; then
     get_target_name() {
         local section=$1
         local path
-        path=$(jq -r section "${section}" '.files.[$section][0]' "${CONFIG_FILE}")
+        path=$(jq -r --arg section "${section}" '.files.[$section][0]' "${CONFIG_FILE}")
         path=${path%/*}
         path=${path##*/}
         echo "${path}"
@@ -45,14 +47,14 @@ if [[ "${RUN_IN_DOCKER}" == "TRUE" ]]; then
     TEST_TARGET_PATH="${WORKING_DIR}/Tests/TestEnvironmentTests"
 
     # 1. Replace source files with those of an exercise, saving TestEnvironement paths
-    rm -rf "${SOURCE_TARGET_PATH}" "${TEST_TARGET_PATH}"
+    rm -r "${SOURCE_TARGET_PATH}" "${TEST_TARGET_PATH}"
 
     target_name=$(get_target_name solution)
     test_target_name=$(get_target_name test)
 
     # Copying everything from package in case of other targets.
-    cp -rf "${INPUT_DIR}/Sources/." "${WORKING_DIR}/Sources"
-    cp -rf "${INPUT_DIR}/Tests/." "${WORKING_DIR}/Tests"
+    cp -r "${INPUT_DIR}/Sources/." "${WORKING_DIR}/Sources"
+    cp -r "${INPUT_DIR}/Tests/." "${WORKING_DIR}/Tests"
 
     mv "${WORKING_DIR}/Sources/${target_name}" "${SOURCE_TARGET_PATH}"
     mv "${WORKING_DIR}/Tests/${test_target_name}" "${TEST_TARGET_PATH}"
