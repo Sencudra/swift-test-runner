@@ -33,10 +33,10 @@ if [[ "${RUN_IN_DOCKER}" == "TRUE" ]]; then
     get_target_name() {
         local section=$1
         local path
-        path=$(jq -r ".files.${section}[0]" "$CONFIG_FILE")        
+        path=$(jq -r section "${section}" '.files.[$section][0]' "${CONFIG_FILE}")
         path=${path%/*}
         path=${path##*/}
-        echo "$path"
+        echo "${path}"
     }
 
     WORKING_DIR="${PWD}"

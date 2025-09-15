@@ -1,8 +1,9 @@
 # Swift build cache warm-up for faster builds inside docker
 
+
 ## Overview
 
-This package is used in a production environment as a container for building and testing students’ solutions.
+This package is used in a production environment as a container for building and testing students' solutions.
 It is built and included in a Docker image with a pre-built .build directory, which minimizes changes in the build graph when applying different exercise solutions.
 Exercise resources are copied into the TestEnvironment package as if they had always been part of it.
 
