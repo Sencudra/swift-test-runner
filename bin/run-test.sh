@@ -14,6 +14,8 @@
 # Example:
 # ./bin/run-test.sh /absolute/path/to/tests/compile-error/
 
+set -eu
+
 # If any required arguments is missing, print the usage and exit
 if [ -z "$1" ]; then
     echo "usage: ./bin/run-test.sh /absolute/path/to/test/folder/"
@@ -34,7 +36,3 @@ sed -i -e "s~\\\/~/~g" -e "s~${test_dir_path}~/solution~g" "${results_file_path}
 
 echo "${test_dir_name}: comparing results.json to expected_results.json"
 diff "${results_file_path}" "${expected_results_file_path}"
-
-if [ $? -ne 0 ]; then
-    echo "\"${test_dir_name}\" failed!"
-fi

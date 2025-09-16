@@ -32,6 +32,7 @@ for test_dir in tests/*; do
         "${dst_test_dir}"
 
     if [ $? -ne 0 ]; then
+        echo "Test \"${test_name}\" failed!" 
         exit_code=1
     fi
 done

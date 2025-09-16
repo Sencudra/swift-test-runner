@@ -15,10 +15,10 @@
 # Example:
 # ./bin/run.sh two-fer /absolute/path/to/two-fer/solution/folder/ /absolute/path/to/output/directory/
 
-set -euo pipefail
+set -eu
 
 # If any required arguments is missing, print the usage and exit
-if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
+if [ "$#" -ne 3 ]; then
     echo "usage: ./bin/run.sh exercise-slug /absolute/path/to/two-fer/solution/folder/ /absolute/path/to/output/directory/"
     exit 1
 fi
@@ -60,13 +60,16 @@ if [[ "${RUN_IN_DOCKER}" == "TRUE" ]]; then
     mv "${WORKING_DIR}/Tests/${test_target_name}" "${TEST_TARGET_PATH}"
 
     # 2. Replace @testable import SomeModule with @testable import TestEnvironment
-    sed -i 's/@testable import [^ ]\+/@testable import TestEnvironment/g' "${WORKING_DIR}/Tests/TestEnvironmentTests"/*.swift
+    sed -i.bak 's/@testable import [^ ]\+/@testable import TestEnvironment/g' \
+        "${WORKING_DIR}/Tests/TestEnvironmentTests"/*.swift \
+        && rm -f "${WORKING_DIR}/Tests/TestEnvironmentTests"/*.swift.bak
 
     # 3. Copy Package.swift and rename main & test targets.
     cp "${INPUT_DIR}/Package.swift" "${WORKING_DIR}"
-    sed -i "s/\"${target_name}\"/\"TestEnvironment\"/g" "${WORKING_DIR}/Package.swift"
-    sed -i "s/\"${test_target_name}\"/\"TestEnvironmentTests\"/g" "${WORKING_DIR}/Package.swift"
-
+    sed -i.bak \
+        -e "s/\"${target_name}\"/\"TestEnvironment\"/g" \
+        -e "s/\"${test_target_name}\"/\"TestEnvironmentTests\"/g" \
+        "${WORKING_DIR}/Package.swift" && rm -f "${WORKING_DIR}/Package.swift.bak"
 else
     WORKING_DIR=${INPUT_DIR}
 fi
@@ -79,9 +82,14 @@ results_file="${OUTPUT_DIR}/results.json"
 touch "${results_file}"
 
 export RUNALL=true
+
+set +e # Disable for swift test
+
 swift test \
     --package-path "${WORKING_DIR}" \
     --xunit-output "${WORKING_DIR}/results.xml" \
     --skip-update &> "${capture_file}"
+
+set -e # Re-enable
 
 ./bin/TestRunner "${spec_file}" "${junit_file}" "${capture_file}" "${results_file}" "${SLUG}"
