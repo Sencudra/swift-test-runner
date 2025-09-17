@@ -1,6 +1,5 @@
 # Swift build cache warm-up for faster builds inside docker
 
-
 ## Overview
 
 This package is used in a production environment as a container for building and testing students' solutions.

@@ -27,19 +27,18 @@ SLUG="$1"
 INPUT_DIR="${2%/}"
 OUTPUT_DIR="${3%/}"
 
+get_target_name() {
+    local section=$1
+    local path=$(jq -r --arg section "${section}" '.files.[$section][0]' "${CONFIG_FILE}")
+    path=${path%/*}
+    path=${path##*/}
+    echo "${path}"
+}
+
 if [[ "${RUN_IN_DOCKER}" == "TRUE" ]]; then
     # Docker image contains a prebuilt package called TestEnvironment with a ready .build directory 
     # to build solutions as fast as it possible. To minimize changes in the build graph,
     # exercise resources are copied inside the TestEnvironment package as if they had always been there.
-
-    get_target_name() {
-        local section=$1
-        local path
-        path=$(jq -r --arg section "${section}" '.files.[$section][0]' "${CONFIG_FILE}")
-        path=${path%/*}
-        path=${path##*/}
-        echo "${path}"
-    }
 
     WORKING_DIR="${PWD}"
     CONFIG_FILE="${INPUT_DIR}/.meta/config.json"
@@ -60,16 +59,17 @@ if [[ "${RUN_IN_DOCKER}" == "TRUE" ]]; then
     mv "${WORKING_DIR}/Tests/${test_target_name}" "${TEST_TARGET_PATH}"
 
     # 2. Replace @testable import SomeModule with @testable import TestEnvironment
-    sed -i.bak 's/@testable import [^ ]\+/@testable import TestEnvironment/g' \
-        "${WORKING_DIR}/Tests/TestEnvironmentTests"/*.swift \
-        && rm -f "${WORKING_DIR}/Tests/TestEnvironmentTests"/*.swift.bak
+    change_import='s/@testable import [^ ]\+/@testable import TestEnvironment/g'
+    for file in "${WORKING_DIR}/Tests/TestEnvironmentTests"/*.swift; do
+        sed -i "${change_import}" "${file}"
+    done
 
     # 3. Copy Package.swift and rename main & test targets.
     cp "${INPUT_DIR}/Package.swift" "${WORKING_DIR}"
-    sed -i.bak \
-        -e "s/\"${target_name}\"/\"TestEnvironment\"/g" \
-        -e "s/\"${test_target_name}\"/\"TestEnvironmentTests\"/g" \
-        "${WORKING_DIR}/Package.swift" && rm -f "${WORKING_DIR}/Package.swift.bak"
+    change_target="s/\"${target_name}\"/\"TestEnvironment\"/g; "
+    change_target+="s/\"${test_target_name}\"/\"TestEnvironmentTests\"/g"
+    sed -i "${change_target}" "${WORKING_DIR}/Package.swift"
+
 else
     WORKING_DIR=${INPUT_DIR}
 fi
@@ -83,13 +83,9 @@ touch "${results_file}"
 
 export RUNALL=true
 
-set +e # Disable for swift test
-
 swift test \
     --package-path "${WORKING_DIR}" \
     --xunit-output "${WORKING_DIR}/results.xml" \
-    --skip-update &> "${capture_file}"
-
-set -e # Re-enable
+    --skip-update &> "${capture_file}" || true
 
 ./bin/TestRunner "${spec_file}" "${junit_file}" "${capture_file}" "${results_file}" "${SLUG}"
