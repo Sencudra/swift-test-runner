@@ -18,7 +18,7 @@
 set -eu
 
 # If any required arguments is missing, print the usage and exit
-if [ "$#" -ne 3 ]; then
+if (( "$#" != 3 )); then
     echo "usage: ./bin/run.sh exercise-slug /absolute/path/to/two-fer/solution/folder/ /absolute/path/to/output/directory/"
     exit 1
 fi
