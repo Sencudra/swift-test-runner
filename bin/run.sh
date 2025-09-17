@@ -29,7 +29,8 @@ OUTPUT_DIR="${3%/}"
 
 get_target_name() {
     local section=$1
-    local path=$(jq -r --arg section "${section}" '.files.[$section][0]' "${CONFIG_FILE}")
+    local path
+    path=$(jq -r --arg section "${section}" '.files.[$section][0]' "${CONFIG_FILE}")
     path=${path%/*}
     path=${path##*/}
     echo "${path}"
